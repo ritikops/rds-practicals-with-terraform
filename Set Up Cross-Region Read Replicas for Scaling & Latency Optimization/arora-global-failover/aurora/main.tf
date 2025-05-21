@@ -63,6 +63,7 @@ resource "aws_db_subnet_group" "primary" {
 }
 
 resource "aws_db_subnet_group" "secondary" {
+  provider = aws.secondary
   name       = "aurora-secondary-subnet-group"
   subnet_ids = var.secondary_subnet_ids
   # subnet_ids = [
@@ -95,6 +96,7 @@ resource "aws_rds_cluster_instance" "primary_inst" {
 }
 
 resource "aws_rds_cluster" "secondary" {
+  provider = aws.secondary
   cluster_identifier        = "aurora-cluster-secondary"
   engine                    = var.db_engine
   engine_version            = var.engine_version
@@ -102,6 +104,9 @@ resource "aws_rds_cluster" "secondary" {
   db_subnet_group_name      = aws_db_subnet_group.secondary.name
   availability_zones        = ["us-west-2a", "us-west-2b"]
   skip_final_snapshot       = true
+  master_username           = var.db_username
+  master_password           = var.db_password
+
 }
 
 resource "aws_rds_cluster_instance" "secondary_inst" {

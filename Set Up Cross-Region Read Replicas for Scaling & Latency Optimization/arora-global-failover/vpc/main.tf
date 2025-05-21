@@ -42,7 +42,7 @@ resource "aws_subnet" "primary_b" {
 resource "aws_subnet" "secondary_a" {
   provider          = aws.secondary
   vpc_id            = aws_vpc.secondary.id
-  cidr_block        = "10.1.1.0/24"
+  cidr_block        = "10.0.1.0/24"
   availability_zone = "us-west-2a"
   tags = {
     Name = "secondary-subnet-a"
@@ -52,7 +52,7 @@ resource "aws_subnet" "secondary_a" {
 resource "aws_subnet" "secondary_b" {
   provider          = aws.secondary
   vpc_id            = aws_vpc.secondary.id
-  cidr_block        = "10.1.2.0/24"
+  cidr_block        = "10.0.2.0/24"
   availability_zone = "us-west-2b"
   tags = {
     Name = "secondary-subnet-b"

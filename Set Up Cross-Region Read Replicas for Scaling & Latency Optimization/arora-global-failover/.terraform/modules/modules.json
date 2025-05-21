@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"aurora","Source":"./aurora","Dir":"aurora"},{"Key":"cloudwatch","Source":"./cloudwatch","Dir":"cloudwatch"},{"Key":"lambda","Source":"./lambda","Dir":"lambda"},{"Key":"route53","Source":"./route53","Dir":"route53"},{"Key":"vpc","Source":"./vpc","Dir":"vpc"}]}
