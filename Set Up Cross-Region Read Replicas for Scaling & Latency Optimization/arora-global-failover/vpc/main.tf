@@ -11,7 +11,7 @@ resource "aws_vpc" "primary" {
 # Secondary VPC
 resource "aws_vpc" "secondary" {
   provider             = aws.secondary
-  cidr_block           = "10.1.0.0/16"
+  cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
@@ -67,13 +67,13 @@ resource "aws_internet_gateway" "primary" {
   }
 }
 
-resource "aws_internet_gateway" "secondary" {
-  provider = aws.secondary
-  vpc_id   = aws_vpc.secondary.id
-  tags = {
-    Name = "secondary-igw"
-  }
-}
+# resource "aws_internet_gateway" "secondary" {
+#   provider = aws.secondary
+#   vpc_id   = aws_vpc.secondary.id
+#   tags = {
+#     Name = "secondary-igw"
+#   }
+# }
 
 # Route Tables and Associations (optional, if internet access is needed)
 resource "aws_route_table" "primary" {
@@ -97,26 +97,24 @@ resource "aws_route_table_association" "primary_b" {
   route_table_id = aws_route_table.primary.id
 }
 
-resource "aws_route_table" "secondary" {
+# Private Route Table (no IGW route)
+resource "aws_route_table" "secondary_private" {
   provider = aws.secondary
   vpc_id   = aws_vpc.secondary.id
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.secondary.id
-  }
   tags = {
-    Name = "secondary-rt"
+    Name = "secondary-private-rt"
   }
 }
 
-resource "aws_route_table_association" "secondary_a" {
+# Associate private route table with subnets
+resource "aws_route_table_association" "secondary_a_private" {
   provider       = aws.secondary
   subnet_id      = aws_subnet.secondary_a.id
-  route_table_id = aws_route_table.secondary.id
+  route_table_id = aws_route_table.secondary_private.id
 }
 
-resource "aws_route_table_association" "secondary_b" {
+resource "aws_route_table_association" "secondary_b_private" {
   provider       = aws.secondary
   subnet_id      = aws_subnet.secondary_b.id
-  route_table_id = aws_route_table.secondary.id
+  route_table_id = aws_route_table.secondary_private.id
 }
