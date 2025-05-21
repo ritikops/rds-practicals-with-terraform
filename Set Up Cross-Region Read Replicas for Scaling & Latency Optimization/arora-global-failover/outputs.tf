@@ -1,9 +1,9 @@
 output "primary_endpoint" {
-  value = aws_rds_cluster.primary.endpoint
+  value = module.aurora.primary_endpoint
 }
 
 output "secondary_endpoint" {
-  value = aws_rds_cluster.secondary.endpoint
+  value = module.aurora.secondary_endpoint
 }
 
 output "dns_name" {

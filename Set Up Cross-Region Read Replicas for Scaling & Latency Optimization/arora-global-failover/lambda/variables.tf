@@ -1,5 +1,20 @@
-variable "primary_region" {}
-variable "secondary_region" {}
-variable "global_cluster_id" {}
-variable "hosted_zone_id" {}
-variable "db_hostname" {}
+variable "primary_region" {
+  type = string
+}
+
+variable "secondary_region" {
+  type = string
+}
+
+variable "global_cluster_id" {
+  type = string
+}
+
+variable "hosted_zone_id" {
+  type = string
+}
+
+variable "db_hostname" {
+  type = string
+}
+variable "function_name" {}

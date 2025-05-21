@@ -108,7 +108,9 @@ module "aurora" {
   subnet_ids           = module.vpc.primary_subnet_ids
   primary_subnet_ids   = module.vpc.primary_subnet_ids
   secondary_subnet_ids = module.vpc.secondary_subnet_ids
+  secondary_vpc_id = module.vpc.secondary_vpc_id
 }
+
 # Repeat for lambda, cloudwatch, route53 modules if they use aliased providers
 
 module "lambda" {
