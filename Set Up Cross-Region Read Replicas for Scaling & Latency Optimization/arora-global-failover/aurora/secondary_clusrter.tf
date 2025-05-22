@@ -1,4 +1,8 @@
 resource "aws_rds_cluster" "secondary" {
+  depends_on = [ 
+    aws_rds_cluster.primary,
+    aws_rds_cluster_instance.primary_writer
+   ]
   provider = aws.secondary
   cluster_identifier        = "aurora-cluster-secondary"
   engine                    = var.db_engine
