@@ -1,7 +1,0 @@
-db_hostname      = "your-db-hostname"
-db_password      = "your-secure-password"
-function_name    = "your-lambda-function-name"
-hosted_zone_id   = "your-route53-zone-id"
-primary_region   = "us-east-1"
-secondary_region = "us-west-2"
-global_cluster_id = "my-global-cluster-1"
