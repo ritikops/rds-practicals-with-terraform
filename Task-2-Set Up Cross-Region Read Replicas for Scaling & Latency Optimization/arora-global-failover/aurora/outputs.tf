@@ -5,3 +5,6 @@ output "primary_endpoint" {
 output "secondary_endpoint" {
   value = aws_rds_cluster.secondary.endpoint
 }
+output "secondary_cluster_id" {
+  value = aws_rds_cluster.secondary.id
+}

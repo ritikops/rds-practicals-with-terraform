@@ -18,3 +18,7 @@ variable "db_hostname" {
   type = string
 }
 variable "function_name" {}
+variable "secondary_cluster_id" {
+  description = "The ID of the secondary Aurora cluster"
+  type        = string
+}

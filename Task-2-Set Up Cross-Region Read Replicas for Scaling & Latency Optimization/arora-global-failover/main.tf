@@ -22,6 +22,7 @@ module "aurora" {
   primary_subnet_ids   = module.vpc.primary_subnet_ids
   secondary_subnet_ids = module.vpc.secondary_subnet_ids
   secondary_vpc_id = module.vpc.secondary_vpc_id
+  
 }
 
 # Repeat for lambda, cloudwatch, route53 modules if they use aliased providers
@@ -35,6 +36,7 @@ module "lambda" {
   primary_region    = var.primary_region
   secondary_region  = var.secondary_region
   global_cluster_id = var.global_cluster_id
+  secondary_cluster_id = module.aurora.secondary_cluster_id
   hosted_zone_id    = var.hosted_zone_id
   db_hostname       = var.db_hostname
   function_name     = var.function_name
@@ -49,6 +51,7 @@ module "cloudwatch" {
   global_cluster_id    = var.global_cluster_id
   lambda_function_arn  = module.lambda.failover_lambda_arn
   lambda_function_name = module.lambda.failover_lambda_name
+  primary_health_check_id = module.route53.primary_health_check_id
 }
 
 module "route53" {

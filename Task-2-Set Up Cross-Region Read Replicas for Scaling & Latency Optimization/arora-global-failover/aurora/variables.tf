@@ -7,7 +7,7 @@ variable "db_engine" {
 variable "engine_version" {
   description = "Engine version"
   type        = string
-  default     = "8.0.mysql_aurora.3.04.0"
+  default     = "5.7.mysql_aurora.2.11.2"
 }
 
 variable "instance_class" {
