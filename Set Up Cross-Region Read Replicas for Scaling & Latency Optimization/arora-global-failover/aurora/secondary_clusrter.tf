@@ -8,7 +8,7 @@ resource "aws_rds_cluster" "secondary" {
     aws_rds_cluster_instance.primary_writer
    ]
   provider = aws.secondary
-  kms_key_id = aws_kms_key.secondary.a
+  kms_key_id = aws_kms_key.secondary.arn
   cluster_identifier        = "aurora-cluster-secondary"
   engine                    = var.db_engine
   engine_version            = var.engine_version
