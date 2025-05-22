@@ -8,4 +8,6 @@
 .terraform.lock.hcl
 .terraform-version
  crash.log
-*.tfplan
+*.tfplan.terraform/
+*.tfstate
+*.tfstate.backup
