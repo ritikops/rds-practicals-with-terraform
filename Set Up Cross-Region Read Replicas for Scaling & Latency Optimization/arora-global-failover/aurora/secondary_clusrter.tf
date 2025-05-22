@@ -11,8 +11,8 @@ resource "aws_rds_cluster" "secondary" {
   db_subnet_group_name      = aws_db_subnet_group.secondary.name
   availability_zones        = ["us-west-2a", "us-west-2b"]
   skip_final_snapshot       = true
-  master_username           = var.db_username
-  master_password           = var.db_password
+#   master_username           = var.db_username
+#   master_password           = var.db_password
 
 }
 
