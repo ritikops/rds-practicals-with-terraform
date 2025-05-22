@@ -5,6 +5,7 @@ resource "aws_lambda_function" "failover" {
   runtime       = "python3.12"
   filename      = "${path.module}/lambda/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/lambda/lambda.zip")
+  timeout = 120
   # ... other config ...
 
 

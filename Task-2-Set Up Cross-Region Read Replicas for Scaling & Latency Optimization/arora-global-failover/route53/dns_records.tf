@@ -1,5 +1,8 @@
 
 resource "aws_route53_record" "primary" {
+  # weighted_routing_policy {
+  #   weight = 0
+  # }
   zone_id = aws_route53_zone.main.zone_id
   name    = var.db_hostname
   type    = "CNAME"
@@ -16,6 +19,9 @@ resource "aws_route53_record" "primary" {
 }
 
 resource "aws_route53_record" "secondary" {
+  # weighted_routing_policy {
+  #   weight = 100
+  # }
   zone_id = aws_route53_zone.main.zone_id
   # var.hosted_zone_id
   name    = var.db_hostname

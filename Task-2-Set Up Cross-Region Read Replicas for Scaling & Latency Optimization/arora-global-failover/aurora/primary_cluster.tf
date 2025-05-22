@@ -1,4 +1,6 @@
 resource "aws_rds_cluster" "primary" {
+  depends_on = [aws_rds_global_cluster.global]
+
   cluster_identifier      = "aurora-cluster-primary"
   provider = aws.primary
   engine                  = var.db_engine
