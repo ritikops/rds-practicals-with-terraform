@@ -1,3 +1,7 @@
+resource "aws_kms_key" "secondary" {
+  provider = aws.secondary
+  description = "KMS key for Aurora secondary cluster"
+}
 resource "aws_rds_cluster" "secondary" {
   depends_on = [ 
     aws_rds_cluster.primary,
