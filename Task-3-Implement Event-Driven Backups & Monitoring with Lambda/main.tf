@@ -65,7 +65,7 @@ module "rds_monitoring" {
 resource "aws_sns_topic_subscription" "email_subscription" {
   topic_arn = module.rds_monitoring.sns_topic_arn
   protocol  = "email"
-  endpoint  = "alerts@example.com"
+  endpoint  = "rikbusiness"
 }
 # provider "aws" {
 #   region = "us-east-1" # Change to your preferred region
