@@ -80,7 +80,7 @@ def handler(event, context):
     try:
         response = rds.failover_global_cluster(
             GlobalClusterIdentifier= 'my-global-cluster-1',
-            TargetDbClusterIdentifier=os.environ['SECONDARY_ARN']
+            TargetDbClusterIdentifier='arn:aws:rds:us-west-2:679720146112:cluster:aurora-cluster-secondary'
         )
         return {
             'statusCode': 200,
