@@ -52,11 +52,31 @@
 #     except Exception as e:
 #         print(f"Failover failed: {str(e)}")
 #         raise
+# import boto3
+# import os
+
+# def handler(event, context):
+#     rds = boto3.client('rds')
+#     try:
+#         response = rds.failover_global_cluster(
+#             GlobalClusterIdentifier=os.environ['GLOBAL_CLUSTER_ID'],
+#             TargetDbClusterIdentifier=os.environ['SECONDARY_ARN']
+#         )
+#         return {
+#             'statusCode': 200,
+#             'body': f"Failover initiated: {response}"
+#         }
+#     except Exception as e:
+#         return {
+#             'statusCode': 500,
+#             'body': f"Failover failed: {str(e)}"
+#         }
 import boto3
 import os
 
 def handler(event, context):
     rds = boto3.client('rds')
+    
     try:
         response = rds.failover_global_cluster(
             GlobalClusterIdentifier=os.environ['GLOBAL_CLUSTER_ID'],
