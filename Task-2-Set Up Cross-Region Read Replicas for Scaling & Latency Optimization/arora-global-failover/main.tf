@@ -36,6 +36,10 @@ module "lambda" {
   primary_region    = var.primary_region
   secondary_region  = var.secondary_region
   global_cluster_id = var.global_cluster_id
+  primary_cluster_identifier = module.aurora.primary_cluster_identifier
+  replica_cluster_identifier = module.aurora.replica_cluster_identifier
+  global_cluster_identifier = module.aurora.global_cluster_identifier
+  replica_region     = var.secondary_region
   secondary_cluster_id = module.aurora.secondary_cluster_id
   hosted_zone_id    = var.hosted_zone_id
   db_hostname       = var.db_hostname
