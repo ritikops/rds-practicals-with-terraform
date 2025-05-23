@@ -79,7 +79,7 @@ def handler(event, context):
     
     try:
         response = rds.failover_global_cluster(
-            GlobalClusterIdentifier=os.environ['GLOBAL_CLUSTER_ID'],
+            GlobalClusterIdentifier= 'my-global-cluster-1',
             TargetDbClusterIdentifier=os.environ['SECONDARY_ARN']
         )
         return {
