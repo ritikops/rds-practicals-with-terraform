@@ -1,3 +1,22 @@
+resource "aws_lambda_function" "failover_ui" {
+  filename      = "failover_ui.zip"
+  function_name = "global-db-failover-ui"
+  role          = aws_iam_role.lambda_failover.arn
+  handler       = "index.handler"
+  runtime       = "python3.9"
+  timeout       = 30
+}
+
+resource "aws_api_gateway_rest_api" "failover_api" {
+  name        = "GlobalDBFailoverAPI"
+  description = "API for initiating global database failover"
+}
+
+resource "aws_api_gateway_deployment" "failover_deployment" {
+  rest_api_id = aws_api_gateway_rest_api.failover_api.id
+  stage_name  = "prod"
+}
+
 resource "aws_iam_role" "step_functions" {
   name = "step-functions-global-db-failover"
 
