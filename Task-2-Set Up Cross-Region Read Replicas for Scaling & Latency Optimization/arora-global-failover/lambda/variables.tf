@@ -22,3 +22,19 @@ variable "secondary_cluster_id" {
   description = "The ID of the secondary Aurora cluster"
   type        = string
 }
+variable "global_cluster_identifier" {
+  description = "The identifier of the RDS global cluster"
+  type        = string
+}
+variable "primary_cluster_identifier" {
+  description = "The identifier of the primary RDS cluster"
+  type        = string
+}
+variable "replica_cluster_identifier" {
+  description = "The identifier of the replica RDS cluster"
+  type        = string
+}
+variable "replica_region" {
+  description = "The AWS region of the replica cluster"
+  type        = string
+}
