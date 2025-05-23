@@ -38,17 +38,36 @@
 #     )
 #     return response
 
+# import boto3
+
+# def handler(event, context):
+#     rds = boto3.client('rds')
+    
+#     try:
+#         response = rds.failover_global_cluster(
+#             GlobalClusterIdentifier=os.environ['GLOBAL_CLUSTER_ID'],
+#             TargetDbClusterIdentifier=os.environ['SECONDARY_ARN'].split(':')[-1]
+#         )
+#         print(f"Failover initiated: {response}")
+#     except Exception as e:
+#         print(f"Failover failed: {str(e)}")
+#         raise
 import boto3
+import os
 
 def handler(event, context):
     rds = boto3.client('rds')
-    
     try:
         response = rds.failover_global_cluster(
             GlobalClusterIdentifier=os.environ['GLOBAL_CLUSTER_ID'],
-            TargetDbClusterIdentifier=os.environ['SECONDARY_ARN'].split(':')[-1]
+            TargetDbClusterIdentifier=os.environ['SECONDARY_ARN']
         )
-        print(f"Failover initiated: {response}")
+        return {
+            'statusCode': 200,
+            'body': f"Failover initiated: {response}"
+        }
     except Exception as e:
-        print(f"Failover failed: {str(e)}")
-        raise
+        return {
+            'statusCode': 500,
+            'body': f"Failover failed: {str(e)}"
+        }
