@@ -11,8 +11,8 @@
 terraform {
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+      source                = "hashicorp/aws"
+      version               = "~> 5.0"
       configuration_aliases = [aws.primary, aws.secondary]
     }
   }
@@ -21,11 +21,11 @@ terraform {
 }
 
 provider "aws" {
-  alias   = "primary"
-  region  = var.primary_region
+  alias  = "primary"
+  region = var.primary_region
 }
 
 provider "aws" {
-  alias   = "secondary"
-  region  = var.secondary_region
+  alias  = "secondary"
+  region = var.secondary_region
 }

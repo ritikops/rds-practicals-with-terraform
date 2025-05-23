@@ -1,3 +1,37 @@
+resource "aws_iam_role" "step_functions" {
+  name = "step-functions-global-db-failover"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "states.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "step_functions_policy" {
+  name = "step-functions-global-db-failover-policy"
+  role = aws_iam_role.step_functions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "rds:FailoverGlobalCluster",
+          "rds:DescribeGlobalClusters",
+          "rds:DescribeDBClusters"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
 resource "aws_sfn_state_machine" "failover_workflow" {
   name     = "global-db-failover-workflow"
   role_arn = aws_iam_role.step_functions.arn
@@ -11,7 +45,7 @@ resource "aws_sfn_state_machine" "failover_workflow" {
       "Type": "Task",
       "Resource": "arn:aws:states:::aws-sdk:rds:describeDBClusters",
       "Parameters": {
-        "DBClusterIdentifier": "aurora-cluster-secondary"
+       "DbClusterIdentifier": "aurora-cluster-secondary"
       },
       "Next": "InitiateFailover"
     },
