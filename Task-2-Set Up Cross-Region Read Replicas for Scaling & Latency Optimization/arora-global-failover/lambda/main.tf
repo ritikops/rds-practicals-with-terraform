@@ -1,3 +1,56 @@
+resource "aws_sfn_state_machine" "failover_workflow" {
+  name     = "global-db-failover-workflow"
+  role_arn = aws_iam_role.step_functions.arn
+
+  definition = <<EOF
+{
+  "Comment": "Global Database Failover Workflow",
+  "StartAt": "VerifySecondary",
+  "States": {
+    "VerifySecondary": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:describeDBClusters",
+      "Parameters": {
+        "DBClusterIdentifier": "aurora-cluster-secondary"
+      },
+      "Next": "InitiateFailover"
+    },
+    "InitiateFailover": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:rds:failoverGlobalCluster",
+      "Parameters": {
+        "GlobalClusterIdentifier": "my-global-cluster-1",
+        "TargetDbClusterIdentifier": "arn:aws:rds:us-west-2:679720146112:cluster:aurora-cluster-secondary"
+      },
+      "End": true
+    }
+  }
+}
+EOF
+}
+resource "aws_ssm_document" "failover_command" {
+  name          = "global-db-failover"
+  document_type = "Command"
+
+  content = <<DOC
+{
+  "schemaVersion": "2.2",
+  "description": "Execute Global Database Failover",
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "failover",
+      "inputs": {
+        "runCommand": [
+          "aws rds failover-global-cluster --global-cluster-identifier my-global-cluster-1 --target-db-cluster-identifier arn:aws:rds:us-west-2:679720146112:cluster:aurora-cluster-secondary"
+        ]
+      }
+    }
+  ]
+}
+DOC
+}
+
 resource "aws_lambda_function" "failover" {
   function_name = var.function_name
   role          = aws_iam_role.lambda_failover.arn
@@ -20,7 +73,16 @@ resource "aws_lambda_function" "failover" {
     }
   }
 }
-
+resource "aws_iam_role" "lambda_failover" {
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
 # resource "aws_iam_role_policy" "lambda_policy" {
 #   name = "${var.function_name}-lambda-policy"
 #   role = aws_iam_role.lambda_exec.id
