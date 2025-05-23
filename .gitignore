@@ -11,3 +11,4 @@
 *.tfplan.terraform/
 *.tfstate
 *.tfstate.backup
+.gitignore
