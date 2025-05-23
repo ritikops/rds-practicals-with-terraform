@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "failover_ui" {
-  filename      = "failover_ui.zip"
+  filename      = "lambda.zip"
   function_name = "global-db-failover-ui"
   role          = aws_iam_role.lambda_failover.arn
   handler       = "index.handler"
