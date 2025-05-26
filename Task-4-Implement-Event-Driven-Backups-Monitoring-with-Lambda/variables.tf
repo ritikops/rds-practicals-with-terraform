@@ -53,7 +53,15 @@ variable "secondary_cluster_arn" {
   description = "The ARN of the secondary cluster"
   type        = string
 }
+variable "primary_kms_key_arn" {
+  description = "ARN of primary KMS key"
+  type        = string
+}
 
+variable "secondary_kms_key_arn" {
+  description = "ARN of secondary KMS key"
+  type        = string
+}
 # variable "backup_bucket" {
 #   description = "The S3 bucket for backups"
 #   type        = string
