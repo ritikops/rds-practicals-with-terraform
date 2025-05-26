@@ -162,6 +162,7 @@ module "monitoring" {
   kms_key_arn           = module.primary.kms_key_arn # Or your KMS ARN
   backup_retention_days = 90
 
+
   # Explicit dependencies
   # depends_on = [
   #   module.primary,
