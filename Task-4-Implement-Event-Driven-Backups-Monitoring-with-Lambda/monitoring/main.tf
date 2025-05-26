@@ -28,39 +28,51 @@ resource "aws_iam_role" "rds_monitor" {
 }
 
 # IAM Policy for Lambda
+
 resource "aws_iam_policy" "rds_monitor_policy" {
-  name = "rds-global-monitor-policy"
+  name        = "rds-global-monitor-policy"
+  description = "Permissions for RDS monitoring Lambda function"
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
+      # RDS Permissions
       {
         Effect = "Allow",
-        Action = ["sns:Publish"],
-        Resource = [
-          # Ensure this is a proper ARN format
-          var.sns_topic_arn
+        Action = [
+          "rds:Describe*",
+          "rds:List*",
+          "rds:CreateDBClusterSnapshot",
+          "rds:StartExportTask"
         ],
         Resource = "*"
       },
+
+      # S3 Backup Permissions
       {
         Effect = "Allow",
         Action = [
           "s3:PutObject",
-          "s3:GetBucketLocation"
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
         ],
         Resource = [
           "arn:aws:s3:::${var.backup_bucket}",
           "arn:aws:s3:::${var.backup_bucket}/*"
         ]
       },
+
+      # SNS Notification Permissions
       {
         Effect = "Allow",
-        Action = [
-          "sns:Publish"
-        ],
-        Resource = [var.sns_topic_arn]
+        Action = ["sns:Publish"],
+        Resource = [
+          aws_sns_topic.rds_alerts.arn,
+          var.sns_topic_arn
+        ]
       },
+
+      # CloudWatch Logs
       {
         Effect = "Allow",
         Action = [
@@ -70,12 +82,15 @@ resource "aws_iam_policy" "rds_monitor_policy" {
         ],
         Resource = ["arn:aws:logs:*:*:*"]
       },
+
+      # KMS Encryption
       {
         Effect = "Allow",
         Action = [
           "kms:Encrypt",
           "kms:Decrypt",
-          "kms:GenerateDataKey"
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
         ],
         Resource = [
           var.primary_kms_key_arn,
@@ -150,4 +165,32 @@ resource "aws_lambda_permission" "eventbridge" {
   function_name = aws_lambda_function.rds_monitor.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.rds_events.arn
+}
+# SNS Topic for Alerts
+resource "aws_sns_topic" "rds_alerts" {
+  name = "rds-global-monitor-alerts"
+}
+
+# S3 Bucket for Backups (if you don't already have one)
+resource "aws_s3_bucket" "rds_backups" {
+  bucket        = "${var.backup_bucket}-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "backups" {
+  bucket = aws_s3_bucket.rds_backups.id
+
+  rule {
+    id     = "backup-retention"
+    status = "Enabled"
+
+    expiration {
+      days = var.backup_retention_days
+    }
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+  }
 }
