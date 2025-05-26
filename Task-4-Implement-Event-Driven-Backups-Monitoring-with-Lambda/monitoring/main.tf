@@ -185,8 +185,8 @@ resource "aws_iam_policy" "rds_monitor_policy" {
           "kms:GenerateDataKey"
         ],
         Resource = [
-          module.primary.kms_key_arn,
-          module.secondary.kms_key_arn
+          var.primary_kms_key_arn,
+          var.secondary_kms_key_arn
         ]
       }
     ]
@@ -210,8 +210,10 @@ resource "aws_lambda_function" "rds_monitor" {
 
   environment {
     variables = {
-      PRIMARY_CLUSTER_ID    = module.primary.cluster_id
-      SECONDARY_CLUSTER_ID  = module.secondary.cluster_id
+      PRIMARY_CLUSTER_ID    = var.primary_cluster_id
+      PRIMARY_CLUSTER_ARN   = var.primary_cluster_arn
+      SECONDARY_CLUSTER_ID  = var.secondary_cluster_id
+      SECONDARY_CLUSTER_ARN = var.secondary_cluster_arn
       BACKUP_BUCKET         = var.backup_bucket
       SNS_TOPIC_ARN         = var.sns_topic_arn
       SLACK_WEBHOOK_URL     = var.slack_webhook_url
@@ -236,8 +238,8 @@ resource "aws_cloudwatch_event_rule" "rds_events" {
         "maintenance"
       ],
       SourceArn = [
-        module.primary.cluster_arn,
-        module.secondary.cluster_arn
+        var.primary_cluster_arn,
+        var.secondary_cluster_arn
       ]
     }
   })

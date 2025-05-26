@@ -57,3 +57,35 @@ variable "db_name" {
   type        = string
   default     = "example_db"
 }
+# output "primary_cluster_id" {
+#   value = module.primary.cluster_id
+# }
+
+# output "primary_cluster_arn" {
+#   value = module.primary.cluster_arn
+# }
+
+# output "secondary_cluster_id" {
+#   value = module.secondary.cluster_id
+# }
+
+# output "secondary_cluster_arn" {
+#   value = module.secondary.cluster_arn
+# }
+variable "primary_cluster_id" {
+  description = "The ID of the primary cluster"
+  type        = string
+
+}
+variable "primary_cluster_arn" {
+  description = "The ARN of the primary cluster"
+  type        = string
+}
+variable "secondary_cluster_id" {
+  description = "The ID of the secondary cluster"
+  type        = string
+}
+variable "secondary_cluster_arn" {
+  description = "The ARN of the secondary cluster"
+  type        = string
+}

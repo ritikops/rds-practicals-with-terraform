@@ -1,10 +1,11 @@
-provider "aws" {
-  region = "us-east-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 4.55.0"
+    }
+  }
 }
-
-// ...existing code...
-
-# Create a KMS Key for RDS encryption
 resource "aws_kms_key" "rds" {
   description             = "KMS key for RDS encryption"
   deletion_window_in_days = 7
