@@ -70,6 +70,14 @@ variable "sns_topic_arn" {
     error_message = "SNS topic ARN must be in format: arn:aws:sns:region:account-id:topic-name"
   }
 }
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  validation {
+    condition     = contains(["db.t3.medium", "db.r5.large", "db.r5.xlarge"], var.db_instance_class)
+    error_message = "Use a production-appropriate instance class"
+  }
+}
 # variable "backup_bucket" {
 #   description = "The S3 bucket for backups"
 #   type        = string
