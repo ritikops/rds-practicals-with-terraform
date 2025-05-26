@@ -136,10 +136,10 @@ module "monitoring" {
   source = "./monitoring"
 
   # Pass variables instead of module references
-  primary_cluster_id    = module.primary.cluster_id
-  primary_cluster_arn   = module.primary.cluster_arn
-  secondary_cluster_id  = module.secondary.cluster_id
-  secondary_cluster_arn = module.secondary.cluster_arn
+  primary_cluster_id    = ""
+  primary_cluster_arn   = ""
+  secondary_cluster_id  = ""
+  secondary_cluster_arn = ""
   secondary_kms_key_arn = module.secondary.kms_key_arn
   primary_kms_key_arn   = module.primary.kms_key_arn
 
