@@ -1,6 +1,7 @@
 # import boto3
 # import os
 # import json
+# import time
 
 # rds = boto3.client('rds')
 # s3 = boto3.client('s3')
@@ -8,18 +9,28 @@
 
 # def lambda_handler(event, context):
 #     try:
-#         # Process RDS event
+#         # Handle CloudWatch Alarm events
+#         if event.get('source') == 'aws.cloudwatch':
+#             if event.get('detail-type') == 'CloudWatch Alarm State Change':
+#                 handle_alarm(event)
+#             return
+        
+#         # Handle RDS events
 #         detail = event.get('detail', {})
 #         event_id = detail.get('EventID', '')
 #         source_arn = detail.get('SourceArn', '')
         
-#         # Handle backup completion events
-#         if 'RDS-EVENT-0081' in event_id:  # Backup completed
+#         # Backup completion event
+#         if 'RDS-EVENT-0081' in event_id:
 #             handle_backup(source_arn)
             
-#         # Handle failover events
-#         elif 'RDS-EVENT-0235' in event_id:  # Failover started
+#         # Failover event
+#         elif 'RDS-EVENT-0235' in event_id:
 #             handle_failover(source_arn)
+            
+#         # Maintenance/notification events
+#         elif any(cat in detail.get('EventCategories', []) for cat in ['notification', 'maintenance']):
+#             handle_notification(detail)
             
 #         return {
 #             'statusCode': 200,
@@ -56,59 +67,62 @@
 #     cluster_id = cluster_arn.split(':')[-1]
 #     send_alert(f"Failover detected for cluster {cluster_id}")
 
+# def handle_alarm(event):
+#     alarm_name = event.get('detail', {}).get('alarmName', '')
+#     if alarm_name == 'rds-global-replica-lag':
+#         lag = event.get('detail', {}).get('state', {}).get('value', 'N/A')
+#         send_alert(f"Replica lag threshold exceeded: {lag} seconds")
+
+# def handle_notification(detail):
+#     message = detail.get('Message', 'No message content')
+#     send_alert(f"RDS Notification: {message}")
+
 # def send_alert(message):
-#     if 'SNS_TOPIC_ARN' in os.environ:
+#     # Send to SNS if configured
+#     if os.environ.get('SNS_TOPIC_ARN'):
 #         sns.publish(
 #             TopicArn=os.environ['SNS_TOPIC_ARN'],
 #             Message=message,
 #             Subject="RDS Global Cluster Alert"
 #         )
+    
+#     # Send to Slack if configured
+#     if os.environ.get('SLACK_WEBHOOK_URL'):
+#         # Implement Slack webhook integration here
+#         pass
 import boto3
 import os
 import json
-import time
+from datetime import datetime
 
-rds = boto3.client('rds')
 s3 = boto3.client('s3')
 sns = boto3.client('sns')
+rds = boto3.client('rds')
 
 def lambda_handler(event, context):
-    try:
-        # Handle CloudWatch Alarm events
-        if event.get('source') == 'aws.cloudwatch':
-            if event.get('detail-type') == 'CloudWatch Alarm State Change':
-                handle_alarm(event)
-            return
-        
-        # Handle RDS events
+    # Process RDS events
+    if 'source' in event and event['source'] == 'aws.rds':
         detail = event.get('detail', {})
         event_id = detail.get('EventID', '')
-        source_arn = detail.get('SourceArn', '')
         
-        # Backup completion event
-        if 'RDS-EVENT-0081' in event_id:
-            handle_backup(source_arn)
-            
-        # Failover event
-        elif 'RDS-EVENT-0235' in event_id:
-            handle_failover(source_arn)
-            
-        # Maintenance/notification events
-        elif any(cat in detail.get('EventCategories', []) for cat in ['notification', 'maintenance']):
-            handle_notification(detail)
-            
-        return {
-            'statusCode': 200,
-            'body': json.dumps('Event processed successfully')
-        }
+        # Handle snapshot completion
+        if 'RDS-EVENT-0081' in event_id:  # Backup completed
+            handle_snapshot(detail)
         
-    except Exception as e:
-        send_alert(f"Error processing RDS event: {str(e)}")
-        raise
+        # Handle failover events
+        elif 'RDS-EVENT-0235' in event_id:  # Failover started
+            handle_failover(detail)
+    
+    # Handle CloudWatch alarms (replica lag)
+    elif event.get('source') == 'aws.cloudwatch':
+        handle_alarm(event)
+    
+    return {'statusCode': 200}
 
-def handle_backup(cluster_arn):
-    cluster_id = cluster_arn.split(':')[-1]
-    snapshot_id = f"{cluster_id}-snapshot-{int(time.time())}"
+def handle_snapshot(detail):
+    cluster_id = detail.get('SourceIdentifier', '')
+    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+    snapshot_id = f"{cluster_id}-snapshot-{timestamp}"
     
     # Create manual snapshot
     rds.create_db_cluster_snapshot(
@@ -120,38 +134,26 @@ def handle_backup(cluster_arn):
     export_task_id = f"{snapshot_id}-export"
     rds.start_export_task(
         ExportTaskIdentifier=export_task_id,
-        SourceArn=f"{cluster_arn.replace(':cluster:', ':cluster-snapshot:')}:{snapshot_id}",
+        SourceArn=f"arn:aws:rds:{os.environ['AWS_REGION']}:{context.invoked_function_arn.split(':')[4]}:cluster-snapshot:{snapshot_id}",
         S3BucketName=os.environ['BACKUP_BUCKET'],
         IamRoleArn=context.invoked_function_arn,
-        KmsKeyId='alias/aws/rds'
+        KmsKeyId=os.environ['KMS_KEY_ARN']
     )
     
     send_alert(f"Backup exported to S3: {export_task_id}")
 
-def handle_failover(cluster_arn):
-    cluster_id = cluster_arn.split(':')[-1]
+def handle_failover(detail):
+    cluster_id = detail.get('SourceIdentifier', '')
     send_alert(f"Failover detected for cluster {cluster_id}")
 
 def handle_alarm(event):
     alarm_name = event.get('detail', {}).get('alarmName', '')
-    if alarm_name == 'rds-global-replica-lag':
-        lag = event.get('detail', {}).get('state', {}).get('value', 'N/A')
-        send_alert(f"Replica lag threshold exceeded: {lag} seconds")
-
-def handle_notification(detail):
-    message = detail.get('Message', 'No message content')
-    send_alert(f"RDS Notification: {message}")
+    if 'replica-lag' in alarm_name.lower():
+        send_alert(f"Replica lag threshold exceeded: {event.get('detail', {}).get('state', {}).get('value')}")
 
 def send_alert(message):
-    # Send to SNS if configured
-    if os.environ.get('SNS_TOPIC_ARN'):
-        sns.publish(
-            TopicArn=os.environ['SNS_TOPIC_ARN'],
-            Message=message,
-            Subject="RDS Global Cluster Alert"
-        )
-    
-    # Send to Slack if configured
-    if os.environ.get('SLACK_WEBHOOK_URL'):
-        # Implement Slack webhook integration here
-        pass
+    sns.publish(
+        TopicArn=os.environ['SNS_TOPIC_ARN'],
+        Message=message,
+        Subject="RDS Global Cluster Alert"
+    )
