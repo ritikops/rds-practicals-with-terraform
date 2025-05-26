@@ -9,3 +9,10 @@ variable "rds_global_cluster_id" {
 variable "sns_topic_arn" {
   type = string
 }
+variable "kms_key_id" {
+  type = string
+}
+
+variable "export_role_arn" {
+  type = string
+}

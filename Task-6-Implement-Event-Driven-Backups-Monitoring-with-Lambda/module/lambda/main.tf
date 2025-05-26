@@ -1,19 +1,42 @@
-resource "aws_iam_role" "lambda_exec" {
-  name = "lambda-monitoring-role"
+resource "aws_iam_policy" "rds_export_policy" {
+  name = "lambda-rds-export-permissions"
 
-  assume_role_policy = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Action = "sts:AssumeRole",
         Effect = "Allow",
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
+        Action = [
+          "rds:StartExportTask",
+          "rds:DescribeDBSnapshots"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt"
+        ],
+        Resource = "*"
       }
     ]
   })
 }
+
+resource "aws_iam_role_policy_attachment" "lambda_export_attach" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = aws_iam_policy.rds_export_policy.arn
+}
+
 
 resource "aws_iam_policy_attachment" "lambda_logs" {
   name       = "lambda-cloudwatch"
@@ -34,6 +57,8 @@ resource "aws_lambda_function" "rds_monitor" {
       BUCKET_NAME       = var.snapshot_s3_bucket
       SNS_TOPIC_ARN     = var.sns_topic_arn
       GLOBAL_CLUSTER_ID = var.rds_global_cluster_id
+      KMS_KEY_ID        = var.kms_key_id
+      EXPORT_ROLE_ARN   = var.export_role_arn
     }
   }
 }
