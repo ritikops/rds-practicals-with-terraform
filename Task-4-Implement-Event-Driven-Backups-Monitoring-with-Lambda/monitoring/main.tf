@@ -81,8 +81,8 @@ resource "aws_iam_policy" "rds_monitor_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          # "arn:aws:s3:::${var.backup_bucket}",
-          # "arn:aws:s3:::${var.backup_bucket}/*"
+          "arn:aws:s3:::${var.backup_bucket}",
+          "arn:aws:s3:::${var.backup_bucket}/*",
           aws_s3_bucket.rds_backups.arn,
           "${aws_s3_bucket.rds_backups.arn}/*"
         ]
