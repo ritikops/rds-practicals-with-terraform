@@ -159,6 +159,8 @@ module "monitoring" {
   sns_topic_arn         = var.sns_topic_arn
   slack_webhook_url     = var.slack_webhook_url
   replica_lag_threshold = var.replica_lag_threshold
+  kms_key_arn           = module.primary.kms_key_arn # Or your KMS ARN
+  backup_retention_days = 90
 
   # Explicit dependencies
   # depends_on = [
