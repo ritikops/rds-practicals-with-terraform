@@ -27,11 +27,11 @@ variable "slack_webhook_url" {
   sensitive   = true
 }
 
-variable "replica_lag_threshold" {
-  description = "Threshold in seconds for replica lag alerts"
-  type        = number
-  default     = 60
-}
+# variable "replica_lag_threshold" {
+#   description = "Threshold in seconds for replica lag alerts"
+#   type        = number
+#   default     = 60
+# }
 variable "replica_lag_threshold" {
   description = "Replica lag threshold in seconds"
   type        = number
