@@ -23,7 +23,7 @@ variable "backup_bucket" {
 variable "slack_webhook_url" {
   description = "Slack webhook URL for alerts"
   type        = string
-  default     = ""
+  default     = "https://iqinfinite.webhook.office.com/webhookb2/f20e6eb8-982c-4024-9e60-a2e46a27cb80@b6859703-4fa9-46af-b7a6-c453ed19dd3d/IncomingWebhook/8eb023620aaf41c1b0ab8dad6e8bf13d/97973af2-3701-4b6c-b775-bb789e97f515/V2ZA1fzbW-5BcQA1BSSFh3mV22Eeri1LLpyBvj2P2H3n81"
   sensitive   = true
 }
 
