@@ -194,7 +194,7 @@ resource "aws_cloudwatch_event_rule" "rds_snapshot_events" {
     detail = {
       EventCategories = ["backup"],
       SourceType      = ["DB_CLUSTER"],
-      EventID         = ["RDS-EVENT-0081", "RDS-EVENT-0091"] # Automated and manual snapshots
+      EventID         = ["RDS-EVENT-0081", "RDS-EVENT-0091"]
     }
   })
 }
@@ -210,7 +210,7 @@ resource "aws_lambda_permission" "eventbridge" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.rds_monitor.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.rds_events.arn
+  source_arn    = aws_cloudwatch_event_rule.rds_snapshot_events.arn
 }
 # SNS Topic for Alerts
 resource "aws_sns_topic" "rds_alerts" {
