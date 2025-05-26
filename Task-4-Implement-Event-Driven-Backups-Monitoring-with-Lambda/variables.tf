@@ -15,10 +15,10 @@ variable "backup_bucket" {
   type        = string
 }
 
-variable "sns_topic_arn" {
-  description = "ARN of SNS topic for alerts"
-  type        = string
-}
+# variable "sns_topic_arn" {
+#   description = "ARN of SNS topic for alerts"
+#   type        = string
+# }
 
 variable "slack_webhook_url" {
   description = "Slack webhook URL for alerts"
