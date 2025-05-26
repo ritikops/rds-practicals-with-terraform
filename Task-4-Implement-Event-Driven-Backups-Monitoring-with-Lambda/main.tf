@@ -134,8 +134,16 @@ module "secondary" {
 #   slack_webhook_url     = var.slack_webhook_url
 #   replica_lag_threshold = var.replica_lag_threshold
 # }
+provider "aws" {
+  region = "us-east-1"
+  alias  = "monitoring_region"
+}
 module "monitoring" {
   source = "./monitoring"
+  providers = {
+    aws = aws.monitoring_region
+  }
+
 
   # Cluster References (must match outputs from primary/secondary modules)
   primary_cluster_id  = module.primary.cluster_id
@@ -153,8 +161,8 @@ module "monitoring" {
   replica_lag_threshold = var.replica_lag_threshold
 
   # Explicit dependencies
-  depends_on = [
-    module.primary,
-    module.secondary
-  ]
+  # depends_on = [
+  #   module.primary,
+  #   module.secondary
+  # ]
 }
