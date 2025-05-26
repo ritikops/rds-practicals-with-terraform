@@ -32,6 +32,15 @@ variable "replica_lag_threshold" {
   type        = number
   default     = 60
 }
+variable "replica_lag_threshold" {
+  description = "Replica lag threshold in seconds"
+  type        = number
+  default     = 60
+  validation {
+    condition     = var.replica_lag_threshold >= 30 && var.replica_lag_threshold <= 300
+    error_message = "Threshold must be between 30-300 seconds"
+  }
+}
 # Define variables for the monitoring module
 
 variable "primary_cluster_id" {
