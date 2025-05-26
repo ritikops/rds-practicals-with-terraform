@@ -157,30 +157,50 @@ resource "aws_lambda_function" "rds_monitor" {
 }
 
 # EventBridge Rule for RDS Events
-resource "aws_cloudwatch_event_rule" "rds_events" {
-  name        = "rds-global-monitor-events"
-  description = "Capture RDS Global Cluster events"
+# resource "aws_cloudwatch_event_rule" "rds_snapshot_events" {
+#   name        = "rds-global-monitor-events"
+#   description = "Capture RDS Global Cluster events"
+
+#   event_pattern = jsonencode({
+#     source      = ["aws.rds"],
+#     detail-type = ["RDS DB Cluster Event", "RDS DB Instance Event"],
+#     detail = {
+#       EventCategories = [
+#         "backup",
+#         "failover",
+#         "notification",
+#         "maintenance"
+#       ],
+#       SourceArn = [
+#         var.primary_cluster_arn,
+#         var.secondary_cluster_arn
+#       ]
+#     }
+#   })
+# }
+
+# resource "aws_cloudwatch_event_target" "lambda" {
+#   rule      = aws_cloudwatch_event_rule.rds_events.name
+#   target_id = "SendToLambda"
+#   arn       = aws_lambda_function.rds_monitor.arn
+# }
+resource "aws_cloudwatch_event_rule" "rds_snapshot_events" {
+  name        = "rds-snapshot-events"
+  description = "Capture RDS snapshot creation events"
 
   event_pattern = jsonencode({
     source      = ["aws.rds"],
-    detail-type = ["RDS DB Cluster Event", "RDS DB Instance Event"],
+    detail-type = ["RDS DB Cluster Event"],
     detail = {
-      EventCategories = [
-        "backup",
-        "failover",
-        "notification",
-        "maintenance"
-      ],
-      SourceArn = [
-        var.primary_cluster_arn,
-        var.secondary_cluster_arn
-      ]
+      EventCategories = ["backup"],
+      SourceType      = ["DB_CLUSTER"],
+      EventID         = ["RDS-EVENT-0081", "RDS-EVENT-0091"] # Automated and manual snapshots
     }
   })
 }
 
 resource "aws_cloudwatch_event_target" "lambda" {
-  rule      = aws_cloudwatch_event_rule.rds_events.name
+  rule      = aws_cloudwatch_event_rule.rds_snapshot_events.name
   target_id = "SendToLambda"
   arn       = aws_lambda_function.rds_monitor.arn
 }
