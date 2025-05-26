@@ -141,12 +141,10 @@ resource "aws_iam_policy" "rds_monitor_policy" {
     Statement = [
       {
         Effect = "Allow",
-        Action = [
-          "rds:Describe*",
-          "rds:List*",
-          "rds:CreateDBClusterSnapshot",
-          "rds:StartExportTask",
-          "rds:PromoteReadReplica"
+        Action = ["sns:Publish"],
+        Resource = [
+          # Ensure this is a proper ARN format
+          var.sns_topic_arn
         ],
         Resource = "*"
       },
