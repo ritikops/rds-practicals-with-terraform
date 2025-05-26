@@ -122,10 +122,12 @@ module "secondary" {
 #   source = "./monitoring"
 
 #   # Pass variables instead of module references
-#   primary_cluster_id    = module.primary.cluster_id
-#   primary_cluster_arn   = module.primary.cluster_arn
-#   secondary_cluster_id  = module.secondary.cluster_id
-#   secondary_cluster_arn = module.secondary.cluster_arn
+#   primary_cluster_id    = ""
+#   primary_cluster_arn   = ""
+#   secondary_cluster_id  = ""
+#   secondary_cluster_arn = ""
+#   secondary_kms_key_arn = module.secondary.kms_key_arn
+#   primary_kms_key_arn   = module.primary.kms_key_arn
 
 #   backup_bucket         = var.backup_bucket
 #   sns_topic_arn         = var.sns_topic_arn
@@ -135,16 +137,24 @@ module "secondary" {
 module "monitoring" {
   source = "./monitoring"
 
-  # Pass variables instead of module references
-  primary_cluster_id    = ""
-  primary_cluster_arn   = ""
-  secondary_cluster_id  = ""
-  secondary_cluster_arn = ""
-  secondary_kms_key_arn = module.secondary.kms_key_arn
-  primary_kms_key_arn   = module.primary.kms_key_arn
+  # Cluster References (must match outputs from primary/secondary modules)
+  primary_cluster_id  = module.primary.cluster_id
+  primary_cluster_arn = module.primary.cluster_arn
+  primary_kms_key_arn = module.primary.kms_key_arn
 
+  secondary_cluster_id  = module.secondary.cluster_id
+  secondary_cluster_arn = module.secondary.cluster_arn
+  secondary_kms_key_arn = module.secondary.kms_key_arn
+
+  # Monitoring Configuration
   backup_bucket         = var.backup_bucket
   sns_topic_arn         = var.sns_topic_arn
   slack_webhook_url     = var.slack_webhook_url
   replica_lag_threshold = var.replica_lag_threshold
+
+  # Explicit dependencies
+  depends_on = [
+    module.primary,
+    module.secondary
+  ]
 }
