@@ -62,6 +62,14 @@ variable "secondary_kms_key_arn" {
   description = "ARN of secondary KMS key"
   type        = string
 }
+variable "sns_topic_arn" {
+  description = "ARN of SNS topic for alerts (must be full ARN format)"
+  type        = string
+  validation {
+    condition     = can(regex("^arn:aws:sns:[a-z0-9-]+:[0-9]{12}:.+$", var.sns_topic_arn))
+    error_message = "SNS topic ARN must be in format: arn:aws:sns:region:account-id:topic-name"
+  }
+}
 # variable "backup_bucket" {
 #   description = "The S3 bucket for backups"
 #   type        = string
