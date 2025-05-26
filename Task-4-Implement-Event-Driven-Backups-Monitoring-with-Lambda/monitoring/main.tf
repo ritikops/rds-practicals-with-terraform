@@ -7,7 +7,6 @@ terraform {
   }
 }
 
-# Remove ANY provider "aws" {} blocks from this file
 
 data "aws_caller_identity" "current" {}
 
@@ -27,6 +26,29 @@ resource "aws_iam_role" "rds_monitor" {
   })
 }
 
+resource "aws_s3_bucket" "rds_backups" {
+  bucket        = "${var.backup_bucket}-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "backups" {
+  bucket = aws_s3_bucket.rds_backups.id
+
+  rule {
+    id     = "backup-retention"
+    status = "Enabled"
+
+    expiration {
+      days = var.backup_retention_days
+    }
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+  }
+}
+
 # IAM Policy for Lambda
 
 resource "aws_iam_policy" "rds_monitor_policy" {
@@ -43,7 +65,9 @@ resource "aws_iam_policy" "rds_monitor_policy" {
           "rds:Describe*",
           "rds:List*",
           "rds:CreateDBClusterSnapshot",
-          "rds:StartExportTask"
+          "rds:StartExportTask",
+          "rds:CopyDBClusterSnapshot"
+
         ],
         Resource = "*"
       },
@@ -57,19 +81,19 @@ resource "aws_iam_policy" "rds_monitor_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          "arn:aws:s3:::${var.backup_bucket}",
-          "arn:aws:s3:::${var.backup_bucket}/*"
+          # "arn:aws:s3:::${var.backup_bucket}",
+          # "arn:aws:s3:::${var.backup_bucket}/*"
+          aws_s3_bucket.rds_backups.arn,
+          "${aws_s3_bucket.rds_backups.arn}/*"
         ]
       },
 
       # SNS Notification Permissions
       {
-        Effect = "Allow",
-        Action = ["sns:Publish"],
-        Resource = [
-          aws_sns_topic.rds_alerts.arn,
-          var.sns_topic_arn
-        ]
+        Effect   = "Allow",
+        Action   = ["sns:Publish"],
+        Resource = [aws_sns_topic.rds_alerts.arn]
+
       },
 
       # CloudWatch Logs
@@ -122,8 +146,10 @@ resource "aws_lambda_function" "rds_monitor" {
       PRIMARY_CLUSTER_ARN   = var.primary_cluster_arn
       SECONDARY_CLUSTER_ID  = var.secondary_cluster_id
       SECONDARY_CLUSTER_ARN = var.secondary_cluster_arn
-      BACKUP_BUCKET         = var.backup_bucket
-      SNS_TOPIC_ARN         = var.sns_topic_arn
+      S3_BACKUP_BUCKET      = aws_s3_bucket.rds_backups.id
+      PRIMARY_KMS_KEY_ARN   = var.primary_kms_key_arn
+      #BACKUP_BUCKET         = var.backup_bucket
+      SNS_TOPIC_ARN         = aws_sns_topic.rds_alerts.arn
       SLACK_WEBHOOK_URL     = var.slack_webhook_url
       REPLICA_LAG_THRESHOLD = var.replica_lag_threshold
     }
@@ -171,26 +197,26 @@ resource "aws_sns_topic" "rds_alerts" {
   name = "rds-global-monitor-alerts"
 }
 
-# S3 Bucket for Backups (if you don't already have one)
-resource "aws_s3_bucket" "rds_backups" {
-  bucket        = "${var.backup_bucket}-${data.aws_caller_identity.current.account_id}"
-  force_destroy = true
-}
+# # S3 Bucket for Backups (if you don't already have one)
+# resource "aws_s3_bucket" "rds_backups" {
+#   bucket        = "${var.backup_bucket}-${data.aws_caller_identity.current.account_id}"
+#   force_destroy = true
+# }
 
-resource "aws_s3_bucket_lifecycle_configuration" "backups" {
-  bucket = aws_s3_bucket.rds_backups.id
+# resource "aws_s3_bucket_lifecycle_configuration" "backups" {
+#   bucket = aws_s3_bucket.rds_backups.id
 
-  rule {
-    id     = "backup-retention"
-    status = "Enabled"
+#   rule {
+#     id     = "backup-retention"
+#     status = "Enabled"
 
-    expiration {
-      days = var.backup_retention_days
-    }
+#     expiration {
+#       days = var.backup_retention_days
+#     }
 
-    transition {
-      days          = 30
-      storage_class = "STANDARD_IA"
-    }
-  }
-}
+#     transition {
+#       days          = 30
+#       storage_class = "STANDARD_IA"
+#     }
+#   }
+# }
