@@ -31,11 +31,11 @@
 
 module "rds" {
   source            = "./modules/rds"
-  master_username   = module.rds.master_username
-  master_password   = module.rds.master_password
-  subnet_ids        = module.rds.subnet_ids
-  security_group_id = module.rds.security_group_id
-  azs               = module.rds.azs
+  master_username   = var.master_username
+  master_password   = var.master_password
+  subnet_ids        = var.subnet_ids
+  security_group_id = var.security_group_id
+  azs               = var.azs
 }
 
 module "notifications" {
