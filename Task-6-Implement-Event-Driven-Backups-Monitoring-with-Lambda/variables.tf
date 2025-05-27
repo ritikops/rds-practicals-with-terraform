@@ -47,3 +47,29 @@ variable "alert_email" {
   description = "The email address to receive RDS event notifications"
   type        = string
 }
+variable "master_username" {
+  description = "The master username for the RDS instance"
+  type        = string
+}
+variable "master_password" {
+  description = "The master password for the RDS instance"
+  type        = string
+}
+variable "db_instance_class" {
+  description = "The instance class for the RDS instance"
+  type        = string
+}
+variable "subnet_ids" {
+  description = "The subnet IDs for the RDS instance"
+  type        = list(string)
+}
+variable "security_group_id" {
+  description = "The security group ID for the RDS instance"
+  type        = string
+}
+
+variable "azs" {
+  description = "The availability zones for the RDS instance"
+  type        = list(string)
+}
+  
