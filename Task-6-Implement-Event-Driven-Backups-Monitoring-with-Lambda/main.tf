@@ -1,13 +1,23 @@
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 provider "aws" {
   region = var.primary_region
 }
-
 module "rds" {
-  source           = "./modules/rds"
-  cluster_name     = var.cluster_name
-  primary_region   = var.primary_region
-  secondary_region = var.secondary_region
-  tags             = var.tags
+  source                    = "./modules/rds"
+  cluster_name              = var.cluster_name
+  primary_region            = var.primary_region
+  secondary_region          = var.secondary_region
+  global_cluster_identifier = var.global_cluster_identifier
+  tags                      = var.tags
 }
 
 module "s3" {

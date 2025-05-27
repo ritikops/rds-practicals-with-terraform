@@ -8,3 +8,7 @@ variable "lambda_function_name" {}
 variable "tags" {
   type = map(string)
 }
+variable "global_cluster_identifier" {
+  description = "The identifier for the global RDS cluster"
+  type        = string
+}
