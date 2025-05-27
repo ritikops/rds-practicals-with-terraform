@@ -30,7 +30,7 @@ resource "aws_security_group" "rds-sg" {
 }
 resource "aws_db_parameter_group" "default" {
   name   = "${var.cluster_name}-db-parameter-group"
-  family = "8.0.mysql_aurora.3.04.0"
+  family = "aurora-mysql8.0"
   tags   = var.tags
 
   parameter {
@@ -60,8 +60,8 @@ resource "aws_rds_cluster" "primary" {
   backup_retention_period   = 7
   skip_final_snapshot       = true
   db_subnet_group_name      = aws_db_subnet_group.subnet-group.name
-  # storage_encrypted         = true
-  apply_immediately = true
+  storage_encrypted         = true
+  apply_immediately         = true
   # publicly_accessible       = false
   vpc_security_group_ids = [aws_security_group.rds-sg.id]
   tags                   = var.tags
