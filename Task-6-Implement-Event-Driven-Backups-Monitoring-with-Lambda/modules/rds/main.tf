@@ -30,7 +30,7 @@ resource "aws_security_group" "rds-sg" {
 }
 resource "aws_db_parameter_group" "default" {
   name   = "${var.cluster_name}-db-parameter-group"
-  family = "aurora-mysql8.0"
+  family = "8.0.mysql_aurora.3.04.0"
   tags   = var.tags
 
   parameter {
