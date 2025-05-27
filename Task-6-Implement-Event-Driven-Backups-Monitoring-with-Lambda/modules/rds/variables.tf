@@ -75,9 +75,10 @@ variable "secondary_db_subnet_group_name" {
 variable "secondary_vpc_security_group_ids" {
   description = "List of VPC security group IDs for the secondary RDS cluster"
   type        = list(string)
+  default     = ["sg-0ecc74d4d4914e4bc"]
 }
 
-variable "db_cluster_parameter_group_name" {
-  description = "The DB cluster parameter group name for the secondary RDS cluster"
-  type        = string
-}
+# variable "db_cluster_parameter_group_name" {
+#   description = "The DB cluster parameter group name for the secondary RDS cluster"
+#   type        = string
+# }
