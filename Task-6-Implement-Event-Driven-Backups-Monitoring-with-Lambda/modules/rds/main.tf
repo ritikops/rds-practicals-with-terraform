@@ -28,7 +28,7 @@ resource "aws_security_group" "rds-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-resource "db_parameter_group" "default" {
+resource "aws_db_parameter_group" "default" {
   name   = "${var.cluster_name}-db-parameter-group"
   family = "aurora-mysql8.0"
   tags   = var.tags
@@ -80,7 +80,6 @@ resource "aws_rds_cluster_instance" "primary_instances" {
 }
 
 resource "aws_rds_cluster" "secondary" {
-  # provider                        = aws.secondary
   cluster_identifier              = "${var.global_cluster_identifier}-secondary"
   engine                          = var.engine
   engine_version                  = var.engine_version
@@ -96,7 +95,6 @@ resource "aws_rds_cluster" "secondary" {
 }
 
 resource "aws_rds_cluster_instance" "secondary_instances" {
-  # provider                   = aws.secondary
   count                      = var.secondary_instance_count
   identifier                 = "${var.global_cluster_identifier}-secondary-${count.index}"
   cluster_identifier         = aws_rds_cluster.secondary.id
