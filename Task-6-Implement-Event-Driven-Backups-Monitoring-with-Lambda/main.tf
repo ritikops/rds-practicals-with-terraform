@@ -1,54 +1,46 @@
-
-# ## Root module - main.tf
-
-# module "rds_global_cluster" {
-#   source = "./modules/rds"
-# }
-
-# module "lambda_monitoring" {
-#   source                = "./modules/lambda"
-#   snapshot_s3_bucket    = module.rds_global_cluster.snapshot_s3_bucket
-#   rds_global_cluster_id = module.rds_global_cluster.global_cluster_id
-#   sns_topic_arn         = module.notifications.sns_topic_arn
-# }
-
-# module "notifications" {
-#   source = "./modules/notifications"
-# }
-
-# provider "aws" {
-#   region = "us-east-1"
-# }
-
-# terraform {
-#   required_providers {
-#     aws = {
-#       source  = "hashicorp/aws"
-#       version = ">= 4.0"
-#     }
-#   }
-# }
-
-module "rds" {
-  source            = "./modules/rds"
-  master_username   = var.master_username
-  master_password   = var.master_password
-  subnet_ids        = var.subnet_ids
-  security_group_id = var.security_group_id
-  azs               = var.azs
+provider "aws" {
+  region = var.primary_region
 }
 
-module "notifications" {
-  source = "./modules/sns"
-  email  = var.alert_email
+module "rds" {
+  source           = "./modules/rds"
+  cluster_name     = var.cluster_name
+  primary_region   = var.primary_region
+  secondary_region = var.secondary_region
+  tags             = var.tags
+}
+
+module "s3" {
+  source      = "./modules/s3"
+  bucket_name = var.snapshot_bucket_name
+  tags        = var.tags
+}
+
+module "sns" {
+  source     = "./modules/sns"
+  topic_name = var.topic_name
+  tags       = var.tags
+}
+
+module "iam" {
+  source           = "./modules/iam"
+  lambda_role_name = var.lambda_role_name
+  s3_bucket_arn    = module.s3.bucket_arn
+  sns_topic_arn    = module.sns.topic_arn
+  tags             = var.tags
 }
 
 module "lambda" {
-  source                  = "./modules/lambda"
-  snapshot_s3_bucket      = module.rds.snapshot_s3_bucket
-  rds_global_cluster_id   = module.rds.global_cluster_id
-  rds_instance_identifier = var.rds_instance_identifier
-  sns_topic_arn           = module.notifications.sns_topic_arn
-  kms_key_id              = var.kms_key_id
-  export_role_arn         = var.export_role_arn
+  source        = "./modules/lambda"
+  function_name = var.lambda_function_name
+  role_arn      = module.iam.lambda_role_arn
+  bucket_name   = module.s3.bucket_name
+  sns_topic_arn = module.sns.topic_arn
+  tags          = var.tags
+}
+
+module "eventbridge" {
+  source     = "./modules/eventbridge"
+  lambda_arn = module.lambda.lambda_arn
+  tags       = var.tags
 }
