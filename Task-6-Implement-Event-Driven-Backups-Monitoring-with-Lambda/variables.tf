@@ -39,3 +39,7 @@ variable "sns_topic_arn" {
   description = "SNS topic ARN for RDS event notifications"
   type        = string
 }
+variable "rds_instance_identifier" {
+  description = "The identifier of the RDS instance"
+  type        = string
+}
