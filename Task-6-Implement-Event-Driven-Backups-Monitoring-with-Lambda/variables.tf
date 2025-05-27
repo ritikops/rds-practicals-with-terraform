@@ -43,3 +43,7 @@ variable "rds_instance_identifier" {
   description = "The identifier of the RDS instance"
   type        = string
 }
+variable "alert_email" {
+  description = "The email address to receive RDS event notifications"
+  type        = string
+}
