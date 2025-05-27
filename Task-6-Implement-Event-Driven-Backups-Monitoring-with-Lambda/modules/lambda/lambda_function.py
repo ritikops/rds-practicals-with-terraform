@@ -1,57 +1,60 @@
-
-# import boto3
-# import os
-# import json
-
-# s3 = boto3.client('s3')
-# rds = boto3.client('rds')
-# sns = boto3.client('sns')
-
-# def handler(event, context):
-#     detail = event['detail']
-#     msg = json.dumps(detail)
-
-#     print("Received RDS event:", msg)
-
-#     if 'EventID' in detail and 'RDS-EVENT-0013' in detail['EventID']:
-#         snapshot_id = detail['SourceIdentifier']
-#         bucket = os.environ['BUCKET_NAME']
-#         kms_key = os.environ['KMS_KEY_ID']
-#         role_arn = os.environ['EXPORT_ROLE_ARN']
-
-#         print(f"Exporting snapshot {snapshot_id} to bucket {bucket}")
-#         rds.start_export_task(
-#             ExportTaskIdentifier=f"export-{snapshot_id}",
-#             SourceArn=f"arn:aws:rds:{event['region']}:{event['account']}:snapshot:{snapshot_id}",
-#             S3BucketName=bucket,
-#             IamRoleArn=role_arn,
-#             KmsKeyId=kms_key
-#         )
-
-#     sns.publish(
-#         TopicArn=os.environ['SNS_TOPIC_ARN'],
-#         Message=msg,
-#         Subject='RDS Event Notification'
-#     )
-
+import json
 import boto3
 import os
-import requests
+import logging
 
-def send_to_slack(message):
-    webhook_url = os.environ['https://iqinfinite.webhook.office.com/webhookb2/f20e6eb8-982c-4024-9e60-a2e46a27cb80@b6859703-4fa9-46af-b7a6-c453ed19dd3d/IncomingWebhook/dab484c21e4e45218c0d69505463c788/97973af2-3701-4b6c-b775-bb789e97f515/V2R36EOYuNLq5EgViirpHVgYlpo59RORupqxMjkD6yWcg1']
-    payload = {"text": message}
-    requests.post(webhook_url, json=payload)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+sns = boto3.client('sns')
+s3 = boto3.client('s3')
+rds = boto3.client('rds')
+
+SNS_TOPIC_ARN = os.environ['SNS_TOPIC']
+S3_BUCKET = os.environ['S3_BUCKET']
 
 def lambda_handler(event, context):
-    client = boto3.client('rds')
-    snapshot_arn = event['detail'].get('SourceArn')
-    export_id = f"export-{snapshot_arn.split(':')[-1]}-{context.aws_request_id[:6]}"
-    response = client.start_export_task(
-        ExportTaskIdentifier=export_id,
-        SourceArn=snapshot_arn,
-        S3BucketName=os.environ['S3_BUCKET_NAME'],
-        IamRoleArn=os.environ['EXPORT_ROLE_ARN'],
-        KmsKeyId=os.environ['KMS_KEY_ID']
-    )
-    send_to_slack(f"Export started: {response}")
+    logger.info("Received event: %s", json.dumps(event))
+
+    detail_type = event.get('detail-type')
+    detail = event.get('detail', {})
+
+    try:
+        if detail_type == 'RDS DB Snapshot Event' and 'snapshotId' in detail:
+            snapshot_id = detail['snapshotId']
+            logger.info(f"Snapshot completed: {snapshot_id}")
+
+            rds.start_export_task(
+                ExportTaskIdentifier=f"export-{snapshot_id}",
+                SourceArn=detail['SourceArn'],
+                S3BucketName=S3_BUCKET,
+                IamRoleArn=os.environ['AWS_LAMBDA_FUNCTION_ROLE'],
+                KmsKeyId='alias/aws/s3'
+            )
+
+            sns.publish(
+                TopicArn=SNS_TOPIC_ARN,
+                Message=f"Snapshot {snapshot_id} exported to {S3_BUCKET}",
+                Subject="RDS Snapshot Exported"
+            )
+
+        elif "replicaLag" in detail:
+            lag = detail["replicaLag"]
+            logger.warning(f"Replica lag detected: {lag}")
+            sns.publish(
+                TopicArn=SNS_TOPIC_ARN,
+                Message=f"Replica lag threshold breached: {lag}",
+                Subject="RDS Replica Lag Warning"
+            )
+
+        elif detail_type == 'RDS Event Notification':
+            logger.warning("Failover or other event detected.")
+            sns.publish(
+                TopicArn=SNS_TOPIC_ARN,
+                Message=f"Failover or RDS event detected: {detail}",
+                Subject="RDS Failover Alert"
+            )
+
+    except Exception as e:
+        logger.error("Error processing event: %s", str(e))
+        raise e
