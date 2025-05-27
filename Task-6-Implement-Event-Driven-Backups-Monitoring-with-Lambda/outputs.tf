@@ -1,11 +1,11 @@
-output "rds_global_cluster_id" {
-  value = module.rds.global_cluster_id
+output "rds_endpoint" {
+  value = module.rds.endpoint
 }
 
-output "sns_topic_arn" {
-  value = module.notifications.sns_topic_arn
+output "lambda_arn" {
+  value = module.lambda.lambda_arn
 }
 
-output "lambda_function_name" {
-  value = module.lambda.rds_monitor_function_name
+output "snapshot_export_bucket" {
+  value = module.s3.bucket_name
 }
