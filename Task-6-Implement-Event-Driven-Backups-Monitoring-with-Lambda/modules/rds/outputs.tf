@@ -5,3 +5,6 @@ output "global_cluster_id" {
 output "snapshot_s3_bucket" {
   value = aws_s3_bucket.snapshot_backup.bucket
 }
+output "endpoint" {
+  value = aws_rds_cluster.primary.endpoint
+}
