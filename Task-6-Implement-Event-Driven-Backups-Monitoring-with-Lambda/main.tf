@@ -44,10 +44,11 @@ module "notifications" {
 }
 
 module "lambda" {
-  source                = "./modules/lambda"
-  snapshot_s3_bucket    = module.rds.snapshot_s3_bucket
-  rds_global_cluster_id = module.rds.global_cluster_id
-  sns_topic_arn         = module.notifications.sns_topic_arn
-  kms_key_id            = var.kms_key_id
-  export_role_arn       = var.export_role_arn
+  source                  = "./modules/lambda"
+  snapshot_s3_bucket      = module.rds.snapshot_s3_bucket
+  rds_global_cluster_id   = module.rds.global_cluster_id
+  rds_instance_identifier = module.rds.rds_instance_identifier
+  sns_topic_arn           = module.notifications.sns_topic_arn
+  kms_key_id              = var.kms_key_id
+  export_role_arn         = var.export_role_arn
 }
