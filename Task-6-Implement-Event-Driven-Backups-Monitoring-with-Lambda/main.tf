@@ -11,13 +11,28 @@ terraform {
 provider "aws" {
   region = var.primary_region
 }
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_security_group" "default" {
+  name   = "default"
+  vpc_id = data.aws_vpc.default.id
+
+}
 module "rds" {
-  source                    = "./modules/rds"
-  cluster_name              = var.cluster_name
-  primary_region            = var.primary_region
-  secondary_region          = var.secondary_region
-  global_cluster_identifier = var.global_cluster_identifier
-  tags                      = var.tags
+  source                           = "./modules/rds"
+  cluster_name                     = var.cluster_name
+  primary_region                   = var.primary_region
+  secondary_region                 = var.secondary_region
+  global_cluster_identifier        = var.global_cluster_identifier
+  tags                             = var.tags
+  secondary_vpc_security_group_ids = [data.aws_security_group.default.id] # Required arguments you are missing:
+  secondary_instance_class         = "db.r6g.large"
+  # secondary_vpc_security_group_ids = "default"
+  engine_version                  = "8.0.mysql_aurora.3.04.0"
+  secondary_db_subnet_group_name  = "your-secondary-subnet-group"
+  db_cluster_parameter_group_name = "your-cluster-parameter-group"
 }
 
 module "s3" {
