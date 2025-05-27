@@ -2,6 +2,11 @@ variable "snapshot_s3_bucket" {
   type = string
 }
 
+variable "rds_instance_identifier" {
+  description = "The identifier of the RDS instance"
+  type        = string
+}
+
 variable "rds_global_cluster_id" {
   type = string
 }
@@ -14,5 +19,8 @@ variable "kms_key_id" {
 }
 
 variable "export_role_arn" {
+  type = string
+}
+variable "rds_instance_identifier" {
   type = string
 }

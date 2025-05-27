@@ -1,6 +1,8 @@
+resource "aws_kms_key" "snapshot_export" {
+  description = "KMS key for RDS snapshot export"
+}
 resource "aws_iam_policy" "rds_export_policy" {
   name = "lambda-rds-export-permissions"
-
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -14,9 +16,14 @@ resource "aws_iam_policy" "rds_export_policy" {
       },
       {
         Effect = "Allow",
+        Principal = {
+          Service = "rds.amazonaws.com"
+        },
+
         Action = [
           "s3:PutObject",
-          "s3:GetObject"
+          "s3:GetObject",
+          "sts:ListBucket"
         ],
         Resource = "*"
       },
@@ -24,7 +31,18 @@ resource "aws_iam_policy" "rds_export_policy" {
         Effect = "Allow",
         Action = [
           "kms:Encrypt",
-          "kms:Decrypt"
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:ReEncryptFrom",
+          "kms:ReEncryptTo"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "rds:StartExportTask",
+          "rds:DescribeExportTasks"
         ],
         Resource = "*"
       }
@@ -84,4 +102,36 @@ resource "aws_lambda_permission" "allow_cloudwatch" {
   function_name = aws_lambda_function.rds_monitor.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.rds_events.arn
+}
+resource "aws_cloudwatch_event_rule" "rds_failover_events" {
+  name        = "rds-failover-events"
+  description = "Catch RDS failover-related events"
+  event_pattern = jsonencode({
+    "source" : ["aws.rds"],
+    "detail-type" : ["RDS DB Instance Event"],
+    "detail" : {
+      "EventID" : ["RDS-EVENT-0049", "RDS-EVENT-0050"]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "failover_event_target" {
+  rule      = aws_cloudwatch_event_rule.rds_failover_events.name
+  target_id = "lambda-failover-alert"
+  arn       = aws_lambda_function.rds_monitor.arn
+}
+resource "aws_cloudwatch_metric_alarm" "replica_lag_alarm" {
+  alarm_name          = "rds-replica-lag"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "ReplicaLag"
+  namespace           = "AWS/RDS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = 100
+  alarm_description   = "Alarm when RDS replica lag exceeds 100 seconds"
+  dimensions = {
+    DBInstanceIdentifier = var.rds_instance_identifier
+  }
+  alarm_actions = [aws_sns_topic.lambda_alert.arn]
 }
