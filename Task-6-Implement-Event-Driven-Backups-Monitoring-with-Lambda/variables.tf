@@ -12,3 +12,7 @@ variable "global_cluster_identifier" {
   description = "The identifier for the global RDS cluster"
   type        = string
 }
+variable "kms_key_arn" {
+  description = "The ARN of the KMS key to use for encryption/decryption in this IAM module."
+  type        = string
+}
