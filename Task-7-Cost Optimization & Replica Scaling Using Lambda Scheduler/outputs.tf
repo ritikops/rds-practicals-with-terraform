@@ -28,3 +28,4 @@ output "lambda_function_name" {
   description = "Name of the Lambda function"
   value       = module.lambda.lambda_name
 }
+
