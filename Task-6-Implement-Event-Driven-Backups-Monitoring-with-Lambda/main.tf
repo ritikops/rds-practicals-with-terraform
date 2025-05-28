@@ -46,11 +46,13 @@ module "sns" {
 }
 
 module "iam" {
-  source           = "./modules/iam"
-  lambda_role_name = var.lambda_role_name
-  s3_bucket_arn    = module.s3.bucket_arn
-  sns_topic_arn    = module.sns.topic_arn
-  tags             = var.tags
+  source                 = "./modules/iam"
+  lambda_role_name       = var.lambda_role_name
+  s3_bucket_arn          = module.s3.bucket_arn
+  sns_topic_arn          = module.sns.topic_arn
+  kms_key_arn            = var.kms_key_arn
+  snapshot_export_bucket = var.snapshot_bucket_name
+  tags                   = var.tags
 }
 
 module "lambda" {
@@ -59,6 +61,7 @@ module "lambda" {
   role_arn      = module.iam.lambda_role_arn
   bucket_name   = module.s3.bucket_name
   sns_topic_arn = module.sns.topic_arn
+  export_role_arn = module.iam.export_role_arn
   tags          = var.tags
 }
 
