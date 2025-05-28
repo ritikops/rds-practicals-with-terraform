@@ -7,8 +7,11 @@ resource "aws_lambda_function" "backup_monitor" {
   source_code_hash = filebase64sha256("${path.module}/lambda_function.zip")
   environment {
     variables = {
-      S3_BUCKET = var.bucket_name
-      SNS_TOPIC = var.sns_topic_arn
+      S3_BUCKET        = var.bucket_name
+      SNS_TOPIC        = var.sns_topic_arn
+      KMS_KEY_ID       = var.kms_key_id
+      EXPORT_ROLE_ARN  = var.export_role_arn
+      # SLACK_WEBHOOK_URL = var.slack_webhook_url  # (optional)
     }
   }
 
