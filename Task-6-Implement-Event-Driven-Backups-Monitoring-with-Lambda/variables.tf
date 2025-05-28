@@ -16,3 +16,7 @@ variable "kms_key_arn" {
   description = "The ARN of the KMS key to use for encryption/decryption in this IAM module."
   type        = string
 }
+variable "slack_webhook_url" {
+  description = "The Slack webhook URL for notifications."
+  type        = string
+}
