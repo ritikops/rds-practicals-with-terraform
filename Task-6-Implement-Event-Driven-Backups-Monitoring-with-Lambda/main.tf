@@ -17,9 +17,9 @@ provider "aws" {
 }
 module "rds" {
   source = "./modules/rds"
-  providers = {
-    aws.secondary = aws.secondary
-  }
+  # providers = {
+  #   aws.secondary = aws.secondary
+  # }
   cluster_name                     = var.cluster_name
   primary_region                   = var.primary_region
   secondary_region                 = var.secondary_region
