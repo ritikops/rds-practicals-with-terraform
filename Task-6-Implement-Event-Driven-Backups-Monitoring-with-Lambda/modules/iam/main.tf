@@ -20,7 +20,10 @@ resource "aws_iam_policy" "lambda_policy" {
       {
         Action = [
           "rds:DescribeDBSnapshots",
-          "rds:Export*"
+          "rds:StartExportTask",
+          "rds:DescribeExportTasks",
+          "rds:CancelExportTask"
+
         ]
         Effect   = "Allow"
         Resource = "*"
@@ -54,4 +57,63 @@ resource "aws_iam_policy" "lambda_policy" {
 resource "aws_iam_role_policy_attachment" "lambda_attach" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = aws_iam_policy.lambda_policy.arn
+}
+resource "aws_iam_role" "rds_export_role" {
+  name = "RDSExportRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "export.rds.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+
+resource "aws_iam_policy" "rds_export_policy" {
+  name = "RDSExportToS3Policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "rds:StartExportTask",
+          "rds:DescribeDBSnapshots",
+          "rds:DescribeExportTasks"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::${var.snapshot_export_bucket}",
+          "arn:aws:s3:::${var.snapshot_export_bucket}/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ],
+        Resource = var.kms_key_arn
+      }
+    ]
+  })
+}
+resource "aws_iam_role_policy_attachment" "attach_export_policy" {
+  role       = aws_iam_role.rds_export_role.name
+  policy_arn = aws_iam_policy.rds_export_policy.arn
 }
