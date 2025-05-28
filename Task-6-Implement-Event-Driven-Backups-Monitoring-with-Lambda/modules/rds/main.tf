@@ -1,3 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 4.0"
+    }
+
+  }
+}
+provider "aws" {
+  alias  = "primary"
+  region = var.primary_region
+}
+provider "aws" {
+  alias  = "secondary"
+  region = var.secondary_region
+}
+
 resource "aws_vpc" "my_vpc" {
   cidr_block = var.vpc_cidr
   tags       = var.tags
@@ -124,9 +142,9 @@ resource "aws_rds_cluster_parameter_group" "secondary" {
   tags        = var.tags
 }
 
-
 resource "aws_rds_cluster" "secondary" {
-  cluster_identifier              = "${var.global_cluster_identifier}-secondary"
+  # cluster_identifier              = "${var.global_cluster_identifier}-secondary"
+  cluster_identifier              = "${var.cluster_name}-secondary"
   provider                        = aws.secondary
   engine                          = var.engine
   engine_version                  = var.engine_version
@@ -143,9 +161,10 @@ resource "aws_rds_cluster" "secondary" {
 
 resource "aws_rds_cluster_instance" "secondary_instances" {
   count                      = var.secondary_instance_count
-  identifier                 = "${var.global_cluster_identifier}-secondary-${count.index}"
+  identifier                 = "${var.cluster_name}-secondary-${count.index}"
   cluster_identifier         = aws_rds_cluster.secondary.id
   instance_class             = var.secondary_instance_class
+  depends_on                 = [aws_rds_cluster.secondary]
   engine                     = var.engine
   publicly_accessible        = false
   auto_minor_version_upgrade = true
