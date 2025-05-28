@@ -92,6 +92,28 @@ resource "aws_rds_global_cluster" "this" {
   engine_version            = "8.0.mysql_aurora.3.04.0"
 }
 
+
+resource "aws_security_group" "secondary_rds_sg" {
+  provider    = aws.secondary
+  name        = "${var.cluster_name}-secondary-rds-sg"
+  description = "Security group for secondary RDS instances"
+  vpc_id      = aws_vpc.secondary_vpc.id
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+resource "aws_rds_cluster_parameter_group" "secondary" {
+  provider    = aws.secondary
+  family      = "aurora-mysql8.0"
+  name        = "${var.cluster_name}-cluster-parameter-group"
+  description = "Cluster parameter group for secondary Aurora cluster"
+  tags        = var.tags
+}
+
 resource "aws_rds_cluster" "primary" {
   cluster_identifier        = "${var.cluster_name}-primary"
   engine                    = "aurora-mysql"
@@ -121,26 +143,6 @@ resource "aws_rds_cluster_instance" "primary_instances" {
   db_parameter_group_name    = var.db_parameter_group_name
   tags                       = var.tags
 }
-resource "aws_security_group" "secondary_rds_sg" {
-  provider    = aws.secondary
-  name        = "${var.cluster_name}-secondary-rds-sg"
-  description = "Security group for secondary RDS instances"
-  vpc_id      = aws_vpc.secondary_vpc.id
-
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-resource "aws_rds_cluster_parameter_group" "secondary" {
-  provider    = aws.secondary
-  family      = "aurora-mysql8.0"
-  name        = "${var.cluster_name}-cluster-parameter-group"
-  description = "Cluster parameter group for secondary Aurora cluster"
-  tags        = var.tags
-}
 
 resource "aws_rds_cluster" "secondary" {
   # cluster_identifier              = "${var.global_cluster_identifier}-secondary"
@@ -160,6 +162,7 @@ resource "aws_rds_cluster" "secondary" {
 }
 
 resource "aws_rds_cluster_instance" "secondary_instances" {
+  provider                   = aws.secondary
   count                      = var.secondary_instance_count
   identifier                 = "${var.cluster_name}-secondary-${count.index}"
   cluster_identifier         = aws_rds_cluster.secondary.id
