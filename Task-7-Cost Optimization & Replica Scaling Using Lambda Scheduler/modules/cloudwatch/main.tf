@@ -21,3 +21,18 @@ resource "aws_cloudwatch_event_target" "scale_down" {
   arn = var.lambda_arn
   input = jsonencode({ "desired_count": 0 })
 }
+resource "aws_lambda_permission" "allow_cloudwatch_up" {
+  statement_id  = "AllowExecutionFromCloudWatchUp"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.scale_schedule_up.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_down" {
+  statement_id  = "AllowExecutionFromCloudWatchDown"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.scale_schedule_down.arn
+}
