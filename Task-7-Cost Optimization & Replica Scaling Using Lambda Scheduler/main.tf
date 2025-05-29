@@ -49,7 +49,8 @@ provider "aws" {
 module "vpc" {
   source               = "./modules/vpc"
   vpc_cidr             = "10.0.0.0/16"
-  private_subnets_cidr = ["10.0.1.0/24", "10.0.2.0/24"]
+  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  private_subnets_cidr = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
 }
 
 # RDS Module
@@ -75,7 +76,10 @@ module "lambda" {
   source         = "./modules/lambda"
   lambda_role_arn = module.iam.lambda_role_arn
   db_cluster_id  = module.rds.db_cluster_id
-  cloudwatch_event_arn = module.cloudwatch.cloudwatch_event_arn
+  scale_up_event_rule_arn = module.cloudwatch.scale_up_event_rule_arn
+  scale_down_event_rule_arn = module.cloudwatch.scale_down_event_rule_arn
+  endpoint = module.rds.endpoint
+
 }
 
 # CloudWatch Scheduler Trigger
