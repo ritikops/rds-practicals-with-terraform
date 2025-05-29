@@ -1,15 +1,14 @@
-output "primary_cluster_id" {
-  value = module.primary.cluster_id
+output "rds_endpoint" {
+  value = module.rds.endpoint
 }
 
-output "primary_cluster_arn" {
-  value = module.primary.cluster_arn
+output "lambda_arn" {
+  value = module.lambda.lambda_arn
 }
 
-output "secondary_cluster_id" {
-  value = module.secondary.cluster_id
+output "snapshot_export_bucket" {
+  value = module.s3.bucket_name
 }
-
-output "secondary_cluster_arn" {
-  value = module.secondary.cluster_arn
-}
+# output "export_role_arn" {
+#   value = aws_iam_role.rds_export_role.arn
+# }

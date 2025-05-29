@@ -1,171 +1,72 @@
-# terraform {
-#   required_version = ">= 1.3.0"
-#   required_providers {
-#     aws = {
-#       source  = "hashicorp/aws"
-#       version = ">= 4.55.0"
-#     }
-#   }
-# }
-
-# provider "aws" {
-#   region = "us-east-1" # Primary region
-#   alias  = "primary"
-# }
-
-# provider "aws" {
-#   region = "eu-west-1" # Secondary region
-#   alias  = "replica"
-# }
-
-# module "primary" {
-#   source = "./primary"
-#   providers = {
-#     aws = aws.primary
-#   }
-#   # Pass all required variables
-#   global_cluster_id = var.global_cluster_id
-#   db_identifier     = var.db_identifier
-# }
-
-# module "secondary" {
-#   source = "./secondary"
-#   providers = {
-#     aws = aws.replica
-#   }
-#   # Pass all required variables
-#   global_cluster_id = var.global_cluster_id
-#   db_identifier     = var.db_identifier
-#   depends_on        = [module.primary]
-# }
-
-# # module "monitoring" {
-# #   source = "./monitoring"
-# #   # Reference outputs from other modules
-# #   primary_cluster_id    = module.primary.cluster_id
-# #   primary_cluster_arn   = module.primary.cluster_arn
-# #   secondary_cluster_id  = module.secondary.cluster_id
-# #   secondary_cluster_arn = module.secondary.cluster_arn
-# #   # Monitoring specific variables
-# #   backup_bucket         = var.backup_bucket
-# #   sns_topic_arn         = var.sns_topic_arn
-# #   slack_webhook_url     = var.slack_webhook_url
-# #   replica_lag_threshold = var.replica_lag_threshold
-# # }
-# module "monitoring" {
-#   source = "./monitoring"
-
-#   # Cluster references
-#   primary_cluster_id    = module.primary.cluster_id
-#   primary_cluster_arn   = module.primary.cluster_arn
-#   secondary_cluster_id  = module.secondary.cluster_id
-#   secondary_cluster_arn = module.secondary.cluster_arn
-
-#   # Monitoring configuration
-#   backup_bucket         = var.backup_bucket
-#   sns_topic_arn         = var.sns_topic_arn
-#   slack_webhook_url     = var.slack_webhook_url
-#   replica_lag_threshold = var.replica_lag_threshold
-# }
 
 terraform {
-  required_version = ">= 1.3.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 4.55.0"
+      version = "~> 5.0"
     }
   }
 }
 
 provider "aws" {
-  region = "us-east-1"
-  alias  = "primary"
+  region = var.primary_region
 }
-
 provider "aws" {
-  region = "eu-west-1"
   alias  = "secondary"
+  region = var.secondary_region
+}
+module "rds" {
+  source = "./modules/rds"
+  # providers = {
+  #   aws.secondary = aws.secondary
+  # }
+  cluster_name                     = var.cluster_name
+  primary_region                   = var.primary_region
+  secondary_region                 = var.secondary_region
+  global_cluster_identifier        = var.global_cluster_identifier
+  tags                             = var.tags
+  secondary_vpc_security_group_ids = ["sg-0ecc74d4d4914e4bc"] # Required arguments you are missing:
+  secondary_instance_class         = "db.r6g.large"
+  # secondary_vpc_security_group_ids = "default"
+  engine_version                 = "8.0.mysql_aurora.3.04.0"
+  secondary_db_subnet_group_name = "secondary-subnet-group"
+  # db_cluster_parameter_group_name = "your-cluster-parameter-group"
 }
 
-module "primary" {
-  source = "./primary"
-  providers = {
-    aws = aws.primary
-  }
-  primary_cluster_id    = var.primary_cluster_id
-  primary_cluster_arn   = var.primary_cluster_arn
-  secondary_cluster_id  = var.secondary_cluster_id
-  secondary_cluster_arn = var.secondary_cluster_arn
-  global_cluster_id     = var.global_cluster_id
-  db_identifier         = var.db_identifier
-  # Add other required variables
+module "s3" {
+  source      = "./modules/s3"
+  bucket_name = var.snapshot_bucket_name
+  tags        = var.tags
 }
 
-module "secondary" {
-  source = "./secondary"
-  providers = {
-    aws = aws.secondary
-  }
-  primary_cluster_id    = var.primary_cluster_id
-  primary_cluster_arn   = var.primary_cluster_arn
-  secondary_cluster_id  = var.secondary_cluster_id
-  secondary_cluster_arn = var.secondary_cluster_arn
-  global_cluster_id     = var.global_cluster_id
-  db_identifier         = var.db_identifier
-  # Add other required variables
-
-  depends_on = [module.primary]
+module "sns" {
+  source     = "./modules/sns"
+  topic_name = var.topic_name
+  tags       = var.tags
 }
 
-# module "monitoring" {
-#   source = "./monitoring"
-
-#   # Pass variables instead of module references
-#   primary_cluster_id    = ""
-#   primary_cluster_arn   = ""
-#   secondary_cluster_id  = ""
-#   secondary_cluster_arn = ""
-#   secondary_kms_key_arn = module.secondary.kms_key_arn
-#   primary_kms_key_arn   = module.primary.kms_key_arn
-
-#   backup_bucket         = var.backup_bucket
-#   sns_topic_arn         = var.sns_topic_arn
-#   slack_webhook_url     = var.slack_webhook_url
-#   replica_lag_threshold = var.replica_lag_threshold
-# }
-provider "aws" {
-  region = "us-east-1"
-  alias  = "monitoring_region"
+module "iam" {
+  source                 = "./modules/iam"
+  lambda_role_name       = var.lambda_role_name
+  s3_bucket_arn          = module.s3.bucket_arn
+  sns_topic_arn          = module.sns.topic_arn
+  kms_key_arn            = var.kms_key_arn
+  snapshot_export_bucket = var.snapshot_bucket_name
+  tags                   = var.tags
 }
-module "monitoring" {
-  source = "./monitoring"
-  providers = {
-    aws = aws.monitoring_region
-  }
 
+module "lambda" {
+  source        = "./modules/lambda"
+  function_name = var.lambda_function_name
+  role_arn      = module.iam.lambda_role_arn
+  bucket_name   = module.s3.bucket_name
+  sns_topic_arn = module.sns.topic_arn
+  export_role_arn = module.iam.export_role_arn
+  tags          = var.tags
+}
 
-  # Cluster References (must match outputs from primary/secondary modules)
-  primary_cluster_id  = module.primary.cluster_id
-  primary_cluster_arn = module.primary.cluster_arn
-  primary_kms_key_arn = module.primary.kms_key_arn
-
-  secondary_cluster_id  = module.secondary.cluster_id
-  secondary_cluster_arn = module.secondary.cluster_arn
-  secondary_kms_key_arn = module.secondary.kms_key_arn
-
-  # Monitoring Configuration
-  backup_bucket         = var.backup_bucket
-  sns_topic_arn         = var.sns_topic_arn
-  slack_webhook_url     = var.slack_webhook_url
-  replica_lag_threshold = var.replica_lag_threshold
-  kms_key_arn           = module.primary.kms_key_arn # Or your KMS ARN
-  backup_retention_days = 90
-
-
-  # Explicit dependencies
-  # depends_on = [
-  #   module.primary,
-  #   module.secondary
-  # ]
+module "eventbridge" {
+  source     = "./modules/eventbridge"
+  lambda_arn = module.lambda.lambda_arn
+  tags       = var.tags
 }
