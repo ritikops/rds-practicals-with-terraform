@@ -78,8 +78,9 @@ module "lambda" {
   db_cluster_id  = module.rds.db_cluster_id
   scale_up_event_rule_arn = module.cloudwatch.scale_up_event_rule_arn
   scale_down_event_rule_arn = module.cloudwatch.scale_down_event_rule_arn
+  lambda_exec_role_arn = module.iam.lambda_exec_role_arn
+  sns_topic_arn = module.lambda.sns_topic_arn
   endpoint = module.rds.endpoint
-
 }
 
 # CloudWatch Scheduler Trigger
