@@ -29,3 +29,35 @@ resource "aws_iam_role_policy_attachment" "rds_scaling_attach" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.rds_scaling_policy.arn
 }
+resource "aws_iam_policy" "ta_lambda_policy" {
+  name = "TrustedAdvisorLambdaPolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement: [
+      {
+        Effect: "Allow",
+        Action: [
+          "support:DescribeTrustedAdvisorChecks",
+          "support:DescribeTrustedAdvisorCheckResult"
+        ],
+        Resource: "*"
+      },
+      {
+        Effect: "Allow",
+        Action: [
+          "sns:Publish",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource: "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_ta_policy" {
+  role       = aws_iam_role.lambda_exec_role.name
+  policy_arn = aws_iam_policy.ta_lambda_policy.arn
+}
