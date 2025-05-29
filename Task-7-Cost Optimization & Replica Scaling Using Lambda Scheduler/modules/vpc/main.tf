@@ -31,10 +31,10 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_subnet" "private" {
-  count             = length(var.private_subnets_cidr)
+  count             = 3
   cidr_block        = element(var.private_subnets_cidr, count.index)
   vpc_id            = aws_vpc.main.id
-  availability_zone = element(data.aws_availability_zones.available.names, count.index)
+  availability_zone = var.availability_zones[count.index]
 
   tags = {
     Name = "private-subnet-${count.index}"
@@ -48,4 +48,10 @@ resource "aws_db_subnet_group" "rds_subnet_group" {
   tags = {
     Name = "RDS Subnet Group"
   }
+}
+resource "aws_security_group" "rds" {
+  name        = "rds-sg"
+  description = "Security group for RDS instances"
+  vpc_id      = aws_vpc.main.id
+
 }
