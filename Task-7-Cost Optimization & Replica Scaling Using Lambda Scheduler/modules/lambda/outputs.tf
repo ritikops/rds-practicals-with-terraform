@@ -7,3 +7,12 @@ output "lambda_name" {
   description = "The name of the Lambda function"
   value       = aws_lambda_function.rds_scheduler.function_name
 }
+output "db_cluster_id" {
+  description = "The ID of the RDS cluster"
+  value       = var.db_cluster_id
+}
+
+output "endpoint" {
+  description = "The endpoint of the RDS cluster"
+  value       = var.endpoint
+}
