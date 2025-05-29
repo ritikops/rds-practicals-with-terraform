@@ -16,3 +16,6 @@ output "endpoint" {
   description = "The endpoint of the RDS cluster"
   value       = var.endpoint
 }
+output "sns_topic_arn" {
+  value = aws_sns_topic.idle_rds_alerts.arn
+}

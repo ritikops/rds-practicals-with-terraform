@@ -28,3 +28,11 @@ variable "scale_down_event_rule_arn" {
   description = "ARN of the scale-down CloudWatch event rule"
   type        = string
 }
+variable "sns_topic_arn" {
+  description = "ARN of the SNS topic"
+  type        = string
+}
+variable "lambda_exec_role_arn" {
+  description = "ARN of the Lambda execution role"
+  type        = string
+}
